@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# chef-client-remove     delete client and node
+#
+# chkconfig: 2345 89 89 
+# description: remove client and node from Chef Server automatically when terminating this instance
+ 
+VAR_SUBSYS_CHEF_CLIENT_REMOVE="/var/lock/subsys/chef-client-remove"
+ 
+# Source function library.
+. /etc/rc.d/init.d/functions
+case "$1" in
+    start)
+        [ -f "$VAR_SUBSYS_CHEF_CLIENT_REMOVE" ] && exit 0
+        touch $VAR_SUBSYS_CHEF_CLIENT_REMOVE
+        RETVAL=$?
+        ;;
+    restart)
+        [ -f "$VAR_SUBSYS_CHEF_CLIENT_REMOVE" ] && exit 0
+        touch $VAR_SUBSYS_CHEF_CLIENT_REMOVE
+        RETVAL=$?
+        ;;
+    stop)
+        [ -f "$VAR_SUBSYS_CHEF_CLIENT_REMOVE" ] || exit 0
+        echo "Removing client from Chef Server..."
+        NODE_NAME=<%= @node_name %>
+        knife node delete $NODE_NAME -y -c /etc/chef/client.rb -u $NODE_NAME
+        knife client delete $NODE_NAME -y -c /etc/chef/client.rb -u $NODE_NAME
+        \rm /etc/chef/client.pem
+        \rm $VAR_SUBSYS_CHEF_CLIENT_REMOVE
+        RETVAL=$?
+        ;;
+
+esac
+exit $RETVAL
